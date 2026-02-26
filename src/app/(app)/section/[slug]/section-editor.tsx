@@ -105,7 +105,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     }
     autosaveTimer.current = setTimeout(() => {
       handleSave();
-    }, 5000);
+    }, 2000);
 
     return () => {
       if (autosaveTimer.current) {

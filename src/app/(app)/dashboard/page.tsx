@@ -6,6 +6,7 @@ import { BookOpen, MessageSquare, Library } from "lucide-react";
 import {
   STATUS_LABELS,
   STATUS_BADGE_VARIANTS,
+  STATUS_CARD_VARIANTS,
   type SectionStatus,
 } from "@/lib/constants";
 
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
               href={`/section/${section.slug}`}
               className="block"
             >
-              <Card className="transition-shadow hover:shadow-md h-full">
+              <Card className={`transition-shadow hover:shadow-md h-full ${STATUS_CARD_VARIANTS[status]}`}>
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                   <CardTitle className="text-base font-semibold">
                     {section.sortOrder}. {section.title}
