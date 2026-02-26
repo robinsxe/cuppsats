@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
       authorId: session.user.id,
       sectionId: body.sectionId ?? null,
       researchItemId: body.researchItemId ?? null,
+      parentId: body.parentId ?? null,
     },
     include: {
       author: { select: { id: true, name: true, role: true } },

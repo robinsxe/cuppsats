@@ -22,7 +22,15 @@ export default async function ResearchDetailPage({ params }: ResearchDetailPageP
           include: { section: { select: { id: true, slug: true, title: true } } },
         },
         comments: {
-          include: { author: { select: { id: true, name: true, role: true } } },
+          include: {
+            author: { select: { id: true, name: true, role: true } },
+            replies: {
+              include: {
+                author: { select: { id: true, name: true, role: true } },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
           orderBy: { createdAt: "asc" },
         },
       },

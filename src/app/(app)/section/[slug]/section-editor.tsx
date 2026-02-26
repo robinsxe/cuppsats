@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, BookOpen } from "lucide-react";
+import { ArrowLeft, Cloud, Loader2, Check, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RichEditor } from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,21 @@ import {
 import { CommentList } from "@/components/comment-list";
 import { CommentForm } from "@/components/comment-form";
 
+export interface CommentData {
+  id: string;
+  content: string;
+  createdAt: Date;
+  parentId: string | null;
+  author: { id: string; name: string; role: string };
+  replies: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    parentId: string | null;
+    author: { id: string; name: string; role: string };
+  }[];
+}
+
 interface SectionData {
   id: string;
   slug: string;
@@ -31,12 +46,7 @@ interface SectionData {
   sortOrder: number;
   status: SectionStatus;
   content: string;
-  comments: {
-    id: string;
-    content: string;
-    createdAt: Date;
-    author: { id: string; name: string; role: string };
-  }[];
+  comments: CommentData[];
   researchLinks: {
     id: string;
     researchItem: { id: string; title: string; authors: string; year: number | null };
@@ -48,19 +58,21 @@ interface SectionEditorProps {
   currentUserId: string;
 }
 
+type SaveStatus = "idle" | "unsaved" | "saving" | "saved";
+
 export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
   const router = useRouter();
   const [content, setContent] = useState(section.content);
   const [status, setStatus] = useState<SectionStatus>(section.status);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const isInitialRender = useRef(true);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasChanges =
     content !== section.content || status !== section.status;
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
-    setSaved(false);
+    setSaveStatus("saving");
 
     const response = await fetch(`/api/sections/${section.slug}`, {
       method: "PATCH",
@@ -68,26 +80,59 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
       body: JSON.stringify({ content, status }),
     });
 
-    setSaving(false);
-
     if (response.ok) {
-      setSaved(true);
+      setSaveStatus("saved");
       router.refresh();
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } else {
+      setSaveStatus("unsaved");
     }
   }, [content, status, section.slug, router]);
 
-  // Ctrl+S keyboard shortcut
+  // Autosave with 5s debounce
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (!hasChanges) return;
+
+    setSaveStatus("unsaved");
+
+    if (autosaveTimer.current) {
+      clearTimeout(autosaveTimer.current);
+    }
+    autosaveTimer.current = setTimeout(() => {
+      handleSave();
+    }, 5000);
+
+    return () => {
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+      }
+    };
+  }, [content, status, hasChanges, handleSave]);
+
+  // Ctrl+S keyboard shortcut for immediate save
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (hasChanges) handleSave();
+        if (hasChanges) {
+          if (autosaveTimer.current) {
+            clearTimeout(autosaveTimer.current);
+          }
+          handleSave();
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasChanges, handleSave]);
+
+  // Reply state
+  const [replyTo, setReplyTo] = useState<{ parentId: string; quotedText: string } | null>(null);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -129,14 +174,24 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
 
         <div className="hidden sm:block flex-1" />
 
-        <Button
-          onClick={handleSave}
-          disabled={saving || !hasChanges}
-          className="gap-2 w-full sm:w-auto"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? "Sparar..." : saved ? "Sparat!" : "Spara"}
-        </Button>
+        {/* Save status indicator */}
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          {saveStatus === "unsaved" && (
+            <Cloud className="h-4 w-4" />
+          )}
+          {saveStatus === "saving" && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Sparar...</span>
+            </>
+          )}
+          {saveStatus === "saved" && (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              <span className="text-green-600">Sparat</span>
+            </>
+          )}
+        </div>
       </div>
 
       <RichEditor
@@ -145,12 +200,6 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         placeholder="Börja skriva här..."
         minHeight={400}
       />
-
-      {hasChanges && (
-        <p className="text-sm text-muted-foreground">
-          Du har osparade ändringar (Ctrl+S för att spara)
-        </p>
-      )}
 
       {/* Linked Research */}
       {section.researchLinks.length > 0 && (
@@ -190,8 +239,17 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         <h2 className="text-lg font-semibold">
           Kommentarer ({section.comments.length})
         </h2>
-        <CommentList comments={section.comments} currentUserId={currentUserId} />
-        <CommentForm sectionId={section.id} />
+        <CommentList
+          comments={section.comments}
+          currentUserId={currentUserId}
+          onReply={(parentId, quotedText) => setReplyTo({ parentId, quotedText })}
+        />
+        <CommentForm
+          sectionId={section.id}
+          parentId={replyTo?.parentId}
+          quotedText={replyTo?.quotedText}
+          onCancel={replyTo ? () => setReplyTo(null) : undefined}
+        />
       </div>
     </div>
   );

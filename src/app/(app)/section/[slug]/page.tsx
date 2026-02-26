@@ -19,7 +19,15 @@ export default async function SectionPage({ params }: SectionPageProps) {
     where: { slug },
     include: {
       comments: {
-        include: { author: { select: { id: true, name: true, role: true } } },
+        include: {
+          author: { select: { id: true, name: true, role: true } },
+          replies: {
+            include: {
+              author: { select: { id: true, name: true, role: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
         orderBy: { createdAt: "asc" },
       },
       researchLinks: {

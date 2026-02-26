@@ -52,7 +52,15 @@ interface ResearchDetailProps {
       id: string;
       content: string;
       createdAt: Date;
+      parentId: string | null;
       author: { id: string; name: string; role: string };
+      replies: {
+        id: string;
+        content: string;
+        createdAt: Date;
+        parentId: string | null;
+        author: { id: string; name: string; role: string };
+      }[];
     }[];
   };
   allSections: { id: string; slug: string; title: string }[];
@@ -67,6 +75,7 @@ export function ResearchDetail({ item, allSections, currentUserId }: ResearchDet
   const [deleting, setDeleting] = useState(false);
   const [linkingSection, setLinkingSection] = useState("");
   const [summarizing, setSummarizing] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ parentId: string; quotedText: string } | null>(null);
   const [summaryText, setSummaryText] = useState(item.summary);
   const [summaryError, setSummaryError] = useState("");
 
@@ -328,8 +337,17 @@ export function ResearchDetail({ item, allSections, currentUserId }: ResearchDet
       {/* Comments */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Kommentarer</h2>
-        <CommentList comments={item.comments} currentUserId={currentUserId} />
-        <CommentForm researchItemId={item.id} />
+        <CommentList
+          comments={item.comments}
+          currentUserId={currentUserId}
+          onReply={(parentId, quotedText) => setReplyTo({ parentId, quotedText })}
+        />
+        <CommentForm
+          researchItemId={item.id}
+          parentId={replyTo?.parentId}
+          quotedText={replyTo?.quotedText}
+          onCancel={replyTo ? () => setReplyTo(null) : undefined}
+        />
       </div>
     </div>
   );

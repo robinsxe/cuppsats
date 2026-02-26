@@ -67,9 +67,12 @@ model Comment {
   authorId       String
   sectionId      String?
   researchItemId String?
+  parentId       String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   author         User          @relation(fields: [authorId], references: [id])
   section        Section?      @relation(fields: [sectionId], references: [id])
   researchItem   ResearchItem? @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  parent         Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies        Comment[]     @relation("CommentReplies")
 }
