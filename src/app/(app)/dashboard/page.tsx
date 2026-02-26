@@ -70,12 +70,15 @@ export default async function DashboardPage() {
                       minute: "2-digit",
                     })}
                   </p>
-                  {section.content && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {section.content.slice(0, 120)}
-                      {section.content.length > 120 ? "..." : ""}
-                    </p>
-                  )}
+                  {section.content && (() => {
+                    const text = section.content.replace(/<[^>]*>/g, "");
+                    return (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {text.slice(0, 120)}
+                        {text.length > 120 ? "..." : ""}
+                      </p>
+                    );
+                  })()}
                   <div className="flex gap-3 pt-1">
                     {section._count.researchLinks > 0 && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">

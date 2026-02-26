@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichEditor } from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -139,11 +139,11 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         </Button>
       </div>
 
-      <Textarea
+      <RichEditor
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onValueChange={setContent}
         placeholder="Börja skriva här..."
-        className="min-h-[400px] resize-y text-base leading-relaxed"
+        minHeight={400}
       />
 
       {hasChanges && (

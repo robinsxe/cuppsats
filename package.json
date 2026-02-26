@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.mts",
     "db:migrate": "npx prisma migrate dev",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "postinstall": "node scripts/copy-tinymce.mjs"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.mts"
@@ -18,6 +19,7 @@
     "@libsql/client": "^0.17.0",
     "@prisma/adapter-libsql": "^7.4.1",
     "@prisma/client": "^6.19.2",
+    "@tinymce/tinymce-react": "^6.3.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,7 +31,8 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "tinymce": "^8.3.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
