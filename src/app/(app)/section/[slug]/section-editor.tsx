@@ -107,14 +107,14 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         </Badge>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Status:</label>
           <Select
             value={status}
             onValueChange={(v) => setStatus(v as SectionStatus)}
           >
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -127,12 +127,12 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
           </Select>
         </div>
 
-        <div className="flex-1" />
+        <div className="hidden sm:block flex-1" />
 
         <Button
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
         >
           <Save className="h-4 w-4" />
           {saving ? "Sparar..." : saved ? "Sparat!" : "Spara"}

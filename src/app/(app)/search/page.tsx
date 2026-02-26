@@ -114,7 +114,7 @@ export default function SearchPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-3">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -122,24 +122,26 @@ export default function SearchPage() {
           className="h-11 text-base flex-1"
           autoFocus
         />
-        <Select value={source} onValueChange={setSource}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alla källor</SelectItem>
-            <SelectItem value="semantic_scholar">Semantic Scholar</SelectItem>
-            <SelectItem value="swepub">SWEPUB</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button type="submit" disabled={searching} className="gap-2 h-11">
-          {searching ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Search className="h-4 w-4" />
-          )}
-          Sök
-        </Button>
+        <div className="flex gap-3">
+          <Select value={source} onValueChange={setSource}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla källor</SelectItem>
+              <SelectItem value="semantic_scholar">Semantic Scholar</SelectItem>
+              <SelectItem value="swepub">SWEPUB</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="submit" disabled={searching} className="gap-2 h-11 shrink-0">
+            {searching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            Sök
+          </Button>
+        </div>
       </form>
 
       {searching && (

@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { BookOpen, LayoutDashboard, LogOut, Search, Library } from "lucide-react";
+import { BookOpen, LayoutDashboard, LogOut, Menu, Search, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -18,11 +25,15 @@ interface SidebarNavProps {
   userRole: string;
 }
 
-export function SidebarNav({ userName, userRole }: SidebarNavProps) {
+function SidebarContent({
+  userName,
+  userRole,
+  onNavClick,
+}: SidebarNavProps & { onNavClick?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
+    <>
       <div className="flex items-center gap-2 border-b p-4">
         <BookOpen className="h-6 w-6" />
         <div>
@@ -39,6 +50,7 @@ export function SidebarNav({ userName, userRole }: SidebarNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavClick}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -70,6 +82,49 @@ export function SidebarNav({ userName, userRole }: SidebarNavProps) {
           Logga ut
         </Button>
       </div>
+    </>
+  );
+}
+
+export function SidebarNav({ userName, userRole }: SidebarNavProps) {
+  return (
+    <aside className="hidden md:flex h-full w-64 flex-col border-r bg-sidebar text-sidebar-foreground">
+      <SidebarContent userName={userName} userRole={userRole} />
     </aside>
+  );
+}
+
+export function MobileSidebar({ userName, userRole }: SidebarNavProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex md:hidden items-center border-b bg-background px-4 py-3 gap-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9"
+        onClick={() => setOpen(true)}
+      >
+        <Menu className="h-5 w-5" />
+        <span className="sr-only">Öppna meny</span>
+      </Button>
+      <div className="flex items-center gap-2">
+        <BookOpen className="h-5 w-5" />
+        <span className="font-bold">C-uppsats</span>
+      </div>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-64 p-0 flex flex-col bg-sidebar text-sidebar-foreground">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          <SidebarContent
+            userName={userName}
+            userRole={userRole}
+            onNavClick={() => setOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }

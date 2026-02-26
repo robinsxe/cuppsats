@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { hashSync } from "bcryptjs";
+import { randomBytes } from "crypto";
 
 function createPrismaClient(): PrismaClient {
   if (process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith("libsql://")) {
@@ -13,6 +14,10 @@ function createPrismaClient(): PrismaClient {
   }
   console.log("Using local SQLite:", process.env.DATABASE_URL);
   return new PrismaClient();
+}
+
+function generatePassword(): string {
+  return randomBytes(12).toString("base64url").slice(0, 16);
 }
 
 const prisma = createPrismaClient();
@@ -33,29 +38,44 @@ const SECTIONS = [
 async function main() {
   console.log("Seeding database...");
 
+  const studentPassword = generatePassword();
+  const supervisorPassword = generatePassword();
+
   const owner = await prisma.user.upsert({
     where: { email: "student@uppsats.se" },
-    update: {},
+    update: {
+      hashedPassword: hashSync(studentPassword, 10),
+    },
     create: {
       name: "Student",
       email: "student@uppsats.se",
-      hashedPassword: hashSync("student123", 10),
+      hashedPassword: hashSync(studentPassword, 10),
       role: "owner",
     },
   });
 
   const supervisor = await prisma.user.upsert({
     where: { email: "handledare@uppsats.se" },
-    update: {},
+    update: {
+      hashedPassword: hashSync(supervisorPassword, 10),
+    },
     create: {
       name: "Handledare",
       email: "handledare@uppsats.se",
-      hashedPassword: hashSync("handledare123", 10),
+      hashedPassword: hashSync(supervisorPassword, 10),
       role: "supervisor",
     },
   });
 
-  console.log(`Created users: ${owner.name} (${owner.role}), ${supervisor.name} (${supervisor.role})`);
+  console.log(`Created/updated users: ${owner.name} (${owner.role}), ${supervisor.name} (${supervisor.role})`);
+  console.log("");
+  console.log("========================================");
+  console.log("  GENERATED CREDENTIALS (save these!)");
+  console.log("========================================");
+  console.log(`  Student:     student@uppsats.se / ${studentPassword}`);
+  console.log(`  Handledare:  handledare@uppsats.se / ${supervisorPassword}`);
+  console.log("========================================");
+  console.log("");
 
   for (const section of SECTIONS) {
     await prisma.section.upsert({

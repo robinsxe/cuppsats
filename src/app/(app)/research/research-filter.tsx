@@ -18,7 +18,7 @@ export function ResearchFilter({ sections, currentSection }: ResearchFilterProps
   const router = useRouter();
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
       <label className="text-sm font-medium">Filtrera per sektion:</label>
       <Select
         value={currentSection ?? "all"}
@@ -30,7 +30,7 @@ export function ResearchFilter({ sections, currentSection }: ResearchFilterProps
           }
         }}
       >
-        <SelectTrigger className="w-64">
+        <SelectTrigger className="w-full sm:w-64">
           <SelectValue placeholder="Alla sektioner" />
         </SelectTrigger>
         <SelectContent>
