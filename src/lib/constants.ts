@@ -26,10 +26,10 @@ export const STATUS_COLORS: Record<SectionStatus, string> = {
 
 export const STATUS_CARD_VARIANTS: Record<SectionStatus, string> = {
   not_started: "",
-  in_progress: "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
-  draft: "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800",
-  review: "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800",
-  done: "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800",
+  in_progress: "!bg-blue-50 !border-blue-200 dark:!bg-blue-950/30 dark:!border-blue-800",
+  draft: "!bg-yellow-50 !border-yellow-200 dark:!bg-yellow-950/30 dark:!border-yellow-800",
+  review: "!bg-orange-50 !border-orange-200 dark:!bg-orange-950/30 dark:!border-orange-800",
+  done: "!bg-green-50 !border-green-200 dark:!bg-green-950/30 dark:!border-green-800",
 };
 
 export const STATUS_BADGE_VARIANTS: Record<SectionStatus, string> = {
