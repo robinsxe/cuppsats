@@ -19,48 +19,59 @@ export async function GET(request: NextRequest) {
   }
 
   const results: SearchResult[] = [];
+  const errors: string[] = [];
 
   const searches: Promise<void>[] = [];
 
   if (source === "all" || source === "semantic_scholar") {
     searches.push(
-      searchSemanticScholar(query, 50).then((papers) => {
-        for (const paper of papers) {
-          results.push({
-            id: paper.paperId,
-            title: paper.title,
-            authors: paper.authors.map((a) => a.name).join(", "),
-            year: paper.year,
-            abstract: paper.abstract ?? "",
-            url: paper.url,
-            doi: paper.externalIds?.DOI ?? null,
-            source: "semantic_scholar",
-          });
-        }
-      })
+      searchSemanticScholar(query, 20)
+        .then((papers) => {
+          for (const paper of papers) {
+            results.push({
+              id: paper.paperId,
+              title: paper.title,
+              authors: paper.authors.map((a) => a.name).join(", "),
+              year: paper.year,
+              abstract: paper.abstract ?? "",
+              url: paper.url,
+              doi: paper.externalIds?.DOI ?? null,
+              source: "semantic_scholar",
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Semantic Scholar search failed:", err);
+          errors.push("Semantic Scholar");
+        })
     );
   }
 
   if (source === "all" || source === "swepub") {
     searches.push(
-      searchSwepub(query, 20).then((records) => {
-        for (const record of records) {
-          results.push({
-            id: record.id,
-            title: record.title,
-            authors: record.authors.join(", "),
-            year: record.year,
-            abstract: record.abstract,
-            url: record.url,
-            doi: record.doi,
-            source: "swepub",
-          });
-        }
-      })
+      searchSwepub(query, 20)
+        .then((records) => {
+          for (const record of records) {
+            results.push({
+              id: record.id,
+              title: record.title,
+              authors: record.authors.join(", "),
+              year: record.year,
+              abstract: record.abstract,
+              url: record.url,
+              doi: record.doi,
+              source: "swepub",
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("SWEPUB search failed:", err);
+          errors.push("SWEPUB");
+        })
     );
   }
 
-  await Promise.allSettled(searches);
+  await Promise.all(searches);
 
   // Sort by year descending, nulls last
   results.sort((a, b) => {
@@ -70,5 +81,9 @@ export async function GET(request: NextRequest) {
     return b.year - a.year;
   });
 
-  return NextResponse.json({ results, total: results.length });
+  return NextResponse.json({
+    results,
+    total: results.length,
+    errors: errors.length > 0 ? errors : undefined,
+  });
 }

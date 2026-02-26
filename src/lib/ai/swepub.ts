@@ -43,8 +43,9 @@ export async function searchSwepub(
   );
 
   if (!response.ok) {
-    console.error("SWEPUB error:", response.status, await response.text());
-    return [];
+    const text = await response.text();
+    console.error("SWEPUB error:", response.status, text);
+    throw new Error(`SWEPUB API returned ${response.status}`);
   }
 
   const data: XsearchResponse = await response.json();

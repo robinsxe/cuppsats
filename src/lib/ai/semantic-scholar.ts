@@ -15,7 +15,7 @@ interface SemanticScholarResponse {
 
 export async function searchSemanticScholar(
   query: string,
-  limit = 50
+  limit = 20
 ): Promise<SemanticScholarPaper[]> {
   const params = new URLSearchParams({
     query,
@@ -27,13 +27,14 @@ export async function searchSemanticScholar(
     `https://api.semanticscholar.org/graph/v1/paper/search?${params}`,
     {
       headers: { "User-Agent": "c-uppsats-tool/1.0" },
-      next: { revalidate: 300 }, // cache 5 min
+      next: { revalidate: 300 },
     }
   );
 
   if (!response.ok) {
-    console.error("Semantic Scholar error:", response.status, await response.text());
-    return [];
+    const text = await response.text();
+    console.error("Semantic Scholar error:", response.status, text);
+    throw new Error(`Semantic Scholar API returned ${response.status}`);
   }
 
   const data: SemanticScholarResponse = await response.json();
