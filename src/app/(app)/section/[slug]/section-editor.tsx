@@ -65,8 +65,21 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
   const [content, setContent] = useState(section.content);
   const [status, setStatus] = useState<SectionStatus>(section.status);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [wordCount, setWordCount] = useState(0);
+  const sessionStartWordCount = useRef<number | null>(null);
   const isInitialRender = useRef(true);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleWordCountChange = useCallback((count: number) => {
+    setWordCount(count);
+    if (sessionStartWordCount.current === null) {
+      sessionStartWordCount.current = count;
+    }
+  }, []);
+
+  const sessionDelta = sessionStartWordCount.current !== null
+    ? wordCount - sessionStartWordCount.current
+    : 0;
 
   const hasChanges =
     content !== section.content || status !== section.status;
@@ -197,9 +210,21 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
       <RichEditor
         value={content}
         onValueChange={setContent}
+        onWordCountChange={handleWordCountChange}
         placeholder="Börja skriva här..."
         minHeight={400}
       />
+
+      {wordCount > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {wordCount} ord
+          {sessionDelta !== 0 && (
+            <span className={sessionDelta > 0 ? "text-green-600" : "text-red-500"}>
+              {" · "}{sessionDelta > 0 ? "+" : ""}{sessionDelta} denna session
+            </span>
+          )}
+        </p>
+      )}
 
       {/* Linked Research */}
       {section.researchLinks.length > 0 && (

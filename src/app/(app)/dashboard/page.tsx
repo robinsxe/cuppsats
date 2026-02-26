@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, MessageSquare, Library } from "lucide-react";
+import { BookOpen, MessageSquare, Library, PenLine, PartyPopper } from "lucide-react";
 import {
   STATUS_LABELS,
   STATUS_BADGE_VARIANTS,
@@ -21,6 +21,12 @@ export default async function DashboardPage() {
     prisma.researchItem.count(),
   ]);
 
+  const nextSection =
+    sections.find((s) => s.status === "in_progress") ??
+    sections.find((s) => s.status === "not_started");
+
+  const allDone = sections.length > 0 && sections.every((s) => s.status === "done");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -38,6 +44,52 @@ export default async function DashboardPage() {
           {totalResearch} {totalResearch === 1 ? "källa" : "källor"} i biblioteket
         </Link>
       </div>
+
+      {allDone ? (
+        <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
+          <CardContent className="flex items-center gap-3 py-4">
+            <PartyPopper className="h-5 w-5 text-green-600" />
+            <p className="text-sm font-medium text-green-800 dark:text-green-300">
+              Alla sektioner är klara — snyggt jobbat!
+            </p>
+          </CardContent>
+        </Card>
+      ) : nextSection ? (
+        <Link href={`/section/${nextSection.slug}`} className="block">
+          <Card className="border-primary/30 bg-primary/5 transition-shadow hover:shadow-md">
+            <CardContent className="flex items-start gap-4 py-4">
+              <div className="rounded-full bg-primary/10 p-2">
+                <PenLine className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Fortsätt skriva</p>
+                <p className="text-base font-medium mt-0.5">
+                  {nextSection.sortOrder}. {nextSection.title}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Senast uppdaterad:{" "}
+                  {new Date(nextSection.updatedAt).toLocaleDateString("sv-SE", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+                {nextSection.content && (() => {
+                  const text = nextSection.content.replace(/<[^>]*>/g, "");
+                  if (!text) return null;
+                  return (
+                    <p className="text-sm text-muted-foreground mt-1 truncate">
+                      {text.slice(0, 80)}{text.length > 80 ? "…" : ""}
+                    </p>
+                  );
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {sections.map((section) => {
