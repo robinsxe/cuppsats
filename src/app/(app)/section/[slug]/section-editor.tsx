@@ -3,9 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Cloud, Loader2, Check, BookOpen } from "lucide-react";
+import { ArrowLeft, Cloud, Loader2, Check, BookOpen, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RichEditor } from "@/components/rich-editor";
+import { Input } from "@/components/ui/input";
+import { RichEditor, type CitationSource } from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -63,6 +64,8 @@ type SaveStatus = "idle" | "unsaved" | "saving" | "saved";
 export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
   const router = useRouter();
   const [content, setContent] = useState(section.content);
+  const [title, setTitle] = useState(section.title);
+  const [editingTitle, setEditingTitle] = useState(false);
   const [status, setStatus] = useState<SectionStatus>(section.status);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [wordCount, setWordCount] = useState(0);
@@ -82,7 +85,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     : 0;
 
   const hasChanges =
-    content !== section.content || status !== section.status;
+    content !== section.content || status !== section.status || title !== section.title;
 
   const handleSave = useCallback(async () => {
     setSaveStatus("saving");
@@ -90,7 +93,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     const response = await fetch(`/api/sections/${section.slug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content, status }),
+      body: JSON.stringify({ content, status, title }),
     });
 
     if (response.ok) {
@@ -100,7 +103,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     } else {
       setSaveStatus("unsaved");
     }
-  }, [content, status, section.slug, router]);
+  }, [content, status, title, section.slug, router]);
 
   // Autosave with 5s debounce
   useEffect(() => {
@@ -125,7 +128,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         clearTimeout(autosaveTimer.current);
       }
     };
-  }, [content, status, hasChanges, handleSave]);
+  }, [content, status, title, hasChanges, handleSave]);
 
   // Ctrl+S keyboard shortcut for immediate save
   useEffect(() => {
@@ -144,6 +147,14 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasChanges, handleSave]);
 
+  // Citation sources from linked research
+  const citations: CitationSource[] = section.researchLinks.map((link) => ({
+    id: link.researchItem.id,
+    authors: link.researchItem.authors,
+    year: link.researchItem.year,
+    title: link.researchItem.title,
+  }));
+
   // Reply state
   const [replyTo, setReplyTo] = useState<{ parentId: string; quotedText: string } | null>(null);
 
@@ -156,9 +167,30 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-xl font-bold">
-            {section.sortOrder}. {section.title}
-          </h1>
+          {editingTitle ? (
+            <Input
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setEditingTitle(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") setEditingTitle(false);
+                if (e.key === "Escape") {
+                  setTitle(section.title);
+                  setEditingTitle(false);
+                }
+              }}
+              className="text-xl font-bold h-auto py-0.5"
+            />
+          ) : (
+            <h1
+              className="text-xl font-bold flex items-center gap-2 group cursor-pointer"
+              onClick={() => setEditingTitle(true)}
+            >
+              {section.sortOrder}. {title}
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </h1>
+          )}
         </div>
         <Badge variant="outline" className={STATUS_BADGE_VARIANTS[status]}>
           {STATUS_LABELS[status]}
@@ -211,6 +243,7 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
         value={content}
         onValueChange={setContent}
         onWordCountChange={handleWordCountChange}
+        citations={citations}
         placeholder="Börja skriva här..."
         minHeight={400}
       />

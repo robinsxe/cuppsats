@@ -17,7 +17,7 @@ export async function PATCH(
   const { slug } = await params;
   const body = await request.json();
 
-  const updateData: { content?: string; status?: string } = {};
+  const updateData: { content?: string; status?: string; title?: string } = {};
 
   if (typeof body.content === "string") {
     updateData.content = body.content;
@@ -25,6 +25,10 @@ export async function PATCH(
 
   if (body.status && SECTION_STATUSES.includes(body.status)) {
     updateData.status = body.status;
+  }
+
+  if (typeof body.title === "string" && body.title.trim().length > 0) {
+    updateData.title = body.title.trim();
   }
 
   if (Object.keys(updateData).length === 0) {
