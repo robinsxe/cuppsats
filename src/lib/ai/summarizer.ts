@@ -25,9 +25,7 @@ export async function summarizeAbstract(
           role: "user",
           content: `Du är en akademisk assistent som hjälper en socionomstudent. Sammanfatta följande forskningsartikel på svenska i 2-3 meningar. Fokusera på huvudresultat och relevans för socialt arbete.
 
-Titel: ${title}
-
-Abstract: ${abstract}`,
+Titel: ${title}${abstract ? `\n\nAbstract: ${abstract}` : "\n\n(Inget abstract tillgängligt — basera sammanfattningen på titeln.)"}`,
         },
       ],
     }),

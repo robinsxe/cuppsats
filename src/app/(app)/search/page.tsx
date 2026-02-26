@@ -78,7 +78,6 @@ export default function SearchPage() {
   }
 
   async function handleSummarize(result: SearchResult) {
-    if (!result.abstract) return;
 
     setSummarizingId(result.id);
 
@@ -222,7 +221,7 @@ export default function SearchPage() {
                     </Button>
                   )}
 
-                  {result.abstract && !summaries[result.id] && (
+                  {!summaries[result.id] && (
                     <Button
                       size="sm"
                       variant="outline"

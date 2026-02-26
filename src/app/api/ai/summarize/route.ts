@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { title, abstract, researchItemId } = body;
 
-  if (!title || !abstract) {
+  if (!title) {
     return NextResponse.json(
-      { error: "Titel och abstract krävs" },
+      { error: "Titel krävs" },
       { status: 400 }
     );
   }
