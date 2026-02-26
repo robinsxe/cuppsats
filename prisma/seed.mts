@@ -1,7 +1,21 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { hashSync } from "bcryptjs";
 
-const prisma = new PrismaClient();
+function createPrismaClient(): PrismaClient {
+  if (process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith("libsql://")) {
+    console.log("Using Turso adapter:", process.env.DATABASE_URL);
+    const adapter = new PrismaLibSql({
+      url: process.env.DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+    return new PrismaClient({ adapter });
+  }
+  console.log("Using local SQLite:", process.env.DATABASE_URL);
+  return new PrismaClient();
+}
+
+const prisma = createPrismaClient();
 
 const SECTIONS = [
   { slug: "inledning", title: "Inledning", sortOrder: 1 },
