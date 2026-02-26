@@ -15,7 +15,7 @@ interface SemanticScholarResponse {
 
 export async function searchSemanticScholar(
   query: string,
-  limit = 10
+  limit = 50
 ): Promise<SemanticScholarPaper[]> {
   const params = new URLSearchParams({
     query,

@@ -8,33 +8,37 @@ export interface SwepubRecord {
   url: string | null;
 }
 
+interface XsearchRecord {
+  identifier?: string;
+  title?: string;
+  creator?: string[];
+  description?: string[];
+  type?: string;
+  date?: string;
+  isbn?: string;
+  relation?: string;
+}
+
 interface XsearchResponse {
-  records?: {
-    record?: {
-      identifier?: string;
-      metadata?: {
-        title?: string;
-        abstract?: string;
-        date?: string;
-        creator?: string[];
-        identifier?: { type?: string; value?: string }[];
-      };
-    }[];
+  xsearch?: {
+    list?: XsearchRecord[];
+    records?: number;
   };
 }
 
 export async function searchSwepub(
   query: string,
-  limit = 10
+  limit = 20
 ): Promise<SwepubRecord[]> {
   const params = new URLSearchParams({
     query,
+    database: "swepub",
     n: String(limit),
     format: "json",
   });
 
   const response = await fetch(
-    `https://xsearch.libris.kb.se/api/swepub?${params}`,
+    `https://libris.kb.se/xsearch?${params}`,
     { next: { revalidate: 300 } }
   );
 
@@ -44,22 +48,20 @@ export async function searchSwepub(
   }
 
   const data: XsearchResponse = await response.json();
-  const records = data.records?.record ?? [];
+  const records = data.xsearch?.list ?? [];
 
   return records.map((r) => {
-    const meta = r.metadata ?? {};
-    const identifiers = meta.identifier ?? [];
-    const doiEntry = identifiers.find((i) => i.type === "doi");
-    const urlEntry = identifiers.find((i) => i.type === "uri" || i.type === "url");
+    const description = r.description?.join(" ") ?? "";
+    const yearMatch = r.date?.match(/\d{4}/);
 
     return {
       id: r.identifier ?? "",
-      title: meta.title ?? "Utan titel",
-      abstract: meta.abstract ?? "",
-      year: meta.date ? parseInt(meta.date, 10) || null : null,
-      authors: meta.creator ?? [],
-      doi: doiEntry?.value ?? null,
-      url: urlEntry?.value ?? null,
+      title: r.title ?? "Utan titel",
+      abstract: description,
+      year: yearMatch ? parseInt(yearMatch[0], 10) : null,
+      authors: r.creator ?? [],
+      doi: null,
+      url: r.identifier?.startsWith("http") ? r.identifier : null,
     };
   });
 }

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   if (source === "all" || source === "semantic_scholar") {
     searches.push(
-      searchSemanticScholar(query, 10).then((papers) => {
+      searchSemanticScholar(query, 50).then((papers) => {
         for (const paper of papers) {
           results.push({
             id: paper.paperId,
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   if (source === "all" || source === "swepub") {
     searches.push(
-      searchSwepub(query, 10).then((records) => {
+      searchSwepub(query, 20).then((records) => {
         for (const record of records) {
           results.push({
             id: record.id,
