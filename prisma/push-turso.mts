@@ -3,9 +3,9 @@ import { createClient } from "@libsql/client";
 const url = process.env.DATABASE_URL!;
 const authToken = process.env.TURSO_AUTH_TOKEN!;
 
-if (!url || !authToken) {
-  console.error("DATABASE_URL and TURSO_AUTH_TOKEN must be set");
-  process.exit(1);
+if (!authToken || !url?.startsWith("libsql://")) {
+  console.log("Skipping Turso schema push (no Turso credentials)");
+  process.exit(0);
 }
 
 const client = createClient({ url, authToken });
@@ -71,12 +71,17 @@ const statements = [
     "authorId" TEXT NOT NULL,
     "sectionId" TEXT,
     "researchItemId" TEXT,
+    "parentId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Comment_sectionId_fkey" FOREIGN KEY ("sectionId") REFERENCES "Section" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Comment_researchItemId_fkey" FOREIGN KEY ("researchItemId") REFERENCES "ResearchItem" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Comment_researchItemId_fkey" FOREIGN KEY ("researchItemId") REFERENCES "ResearchItem" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Comment" ("id") ON DELETE SET NULL ON UPDATE CASCADE
   )`,
+
+  // Migration: add parentId to existing Comment table
+  `ALTER TABLE "Comment" ADD COLUMN "parentId" TEXT REFERENCES "Comment"("id") ON DELETE SET NULL ON UPDATE CASCADE`,
 ];
 
 async function main() {
