@@ -182,9 +182,11 @@ export function ResearchDetail({ item, allSections, currentUserId }: ResearchDet
         <Badge variant="outline" className="capitalize">
           {item.source === "semantic_scholar"
             ? "Semantic Scholar"
-            : item.source === "swepub"
-              ? "SWEPUB"
-              : "Manuell"}
+            : item.source === "openalex"
+              ? "OpenAlex"
+              : item.source === "swepub"
+                ? "SWEPUB"
+                : "Manuell"}
         </Badge>
         {item.doi && <Badge variant="secondary">DOI: {item.doi}</Badge>}
         {item.url && (

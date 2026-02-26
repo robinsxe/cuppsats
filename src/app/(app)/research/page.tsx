@@ -95,9 +95,11 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
                     <Badge variant="outline" className="text-xs capitalize">
                       {item.source === "semantic_scholar"
                         ? "Semantic Scholar"
-                        : item.source === "swepub"
-                          ? "SWEPUB"
-                          : "Manuell"}
+                        : item.source === "openalex"
+                          ? "OpenAlex"
+                          : item.source === "swepub"
+                            ? "SWEPUB"
+                            : "Manuell"}
                     </Badge>
                   </div>
                   {item.links.length > 0 && (

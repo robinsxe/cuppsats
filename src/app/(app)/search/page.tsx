@@ -110,7 +110,7 @@ export default function SearchPage() {
       <div>
         <h1 className="text-2xl font-bold">Sök artiklar</h1>
         <p className="text-muted-foreground">
-          Sök i Semantic Scholar och SWEPUB
+          Sök i Semantic Scholar och OpenAlex
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export default function SearchPage() {
             <SelectContent>
               <SelectItem value="all">Alla källor</SelectItem>
               <SelectItem value="semantic_scholar">Semantic Scholar</SelectItem>
-              <SelectItem value="swepub">SWEPUB</SelectItem>
+              <SelectItem value="openalex">OpenAlex</SelectItem>
             </SelectContent>
           </Select>
           <Button type="submit" disabled={searching} className="gap-2 h-11 shrink-0">
@@ -176,7 +176,7 @@ export default function SearchPage() {
                   <Badge variant="outline" className="shrink-0 text-xs">
                     {result.source === "semantic_scholar"
                       ? "Semantic Scholar"
-                      : "SWEPUB"}
+                      : "OpenAlex"}
                   </Badge>
                 </div>
               </CardHeader>

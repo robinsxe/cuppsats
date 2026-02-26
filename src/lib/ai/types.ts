@@ -6,5 +6,5 @@ export interface SearchResult {
   abstract: string;
   url: string | null;
   doi: string | null;
-  source: "semantic_scholar" | "swepub";
+  source: "semantic_scholar" | "openalex";
 }

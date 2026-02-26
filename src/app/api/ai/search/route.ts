@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { searchSemanticScholar } from "@/lib/ai/semantic-scholar";
-import { searchSwepub } from "@/lib/ai/swepub";
+import { searchOpenAlex } from "@/lib/ai/openalex";
 import { type SearchResult } from "@/lib/ai/types";
 
 export async function GET(request: NextRequest) {
@@ -47,34 +47,44 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (source === "all" || source === "swepub") {
+  if (source === "all" || source === "openalex") {
     searches.push(
-      searchSwepub(query, 20)
-        .then((records) => {
-          for (const record of records) {
+      searchOpenAlex(query, 20)
+        .then((papers) => {
+          for (const paper of papers) {
             results.push({
-              id: record.id,
-              title: record.title,
-              authors: record.authors.join(", "),
-              year: record.year,
-              abstract: record.abstract,
-              url: record.url,
-              doi: record.doi,
-              source: "swepub",
+              id: paper.id,
+              title: paper.title,
+              authors: paper.authors.join(", "),
+              year: paper.year,
+              abstract: paper.abstract,
+              url: paper.url,
+              doi: paper.doi,
+              source: "openalex",
             });
           }
         })
         .catch((err) => {
-          console.error("SWEPUB search failed:", err);
-          errors.push("SWEPUB");
+          console.error("OpenAlex search failed:", err);
+          errors.push("OpenAlex");
         })
     );
   }
 
   await Promise.all(searches);
 
+  // Deduplicate by DOI
+  const seen = new Set<string>();
+  const deduped = results.filter((r) => {
+    if (r.doi) {
+      if (seen.has(r.doi)) return false;
+      seen.add(r.doi);
+    }
+    return true;
+  });
+
   // Sort by year descending, nulls last
-  results.sort((a, b) => {
+  deduped.sort((a, b) => {
     if (a.year === null && b.year === null) return 0;
     if (a.year === null) return 1;
     if (b.year === null) return -1;
@@ -82,8 +92,8 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({
-    results,
-    total: results.length,
+    results: deduped,
+    total: deduped.length,
     errors: errors.length > 0 ? errors : undefined,
   });
 }
