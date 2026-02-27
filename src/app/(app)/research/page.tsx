@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, ExternalLink } from "lucide-react";
 import { ResearchFilter } from "./research-filter";
+import { ResearchTabs } from "./research-tabs";
 
 interface ResearchPageProps {
   searchParams: Promise<{ section?: string }>;
@@ -36,6 +37,7 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
 
   return (
     <div className="space-y-6">
+      <ResearchTabs />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Forskningsbibliotek</h1>

@@ -9,15 +9,18 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
+  id             String           @id @default(cuid())
   name           String
-  email          String    @unique
+  email          String           @unique
   hashedPassword String
-  role           String    @default("owner") // "owner" | "supervisor"
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  role           String           @default("owner") // "owner" | "supervisor"
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   comments       Comment[]
   sessions       WritingSession[]
+  assignedTodos  TodoItem[]       @relation("TodoAssignee")
+  createdTodos   TodoItem[]       @relation("TodoCreator")
+  uploadedFiles  ResearchFile[]
 }
 
 model WritingSession {
@@ -75,17 +78,57 @@ model ResearchLink {
 }
 
 model Comment {
-  id             String        @id @default(cuid())
-  content        String
-  authorId       String
-  sectionId      String?
-  researchItemId String?
-  parentId       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  author         User          @relation(fields: [authorId], references: [id])
-  section        Section?      @relation(fields: [sectionId], references: [id])
-  researchItem   ResearchItem? @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
-  parent         Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
-  replies        Comment[]     @relation("CommentReplies")
+  id               String        @id @default(cuid())
+  content          String
+  authorId         String
+  sectionId        String?
+  researchItemId   String?
+  researchFileId   String?
+  parentId         String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  author           User          @relation(fields: [authorId], references: [id])
+  section          Section?      @relation(fields: [sectionId], references: [id])
+  researchItem     ResearchItem? @relation(fields: [researchItemId], references: [id], onDelete: Cascade)
+  researchFile     ResearchFile? @relation(fields: [researchFileId], references: [id], onDelete: Cascade)
+  parent           Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies          Comment[]     @relation("CommentReplies")
+}
+
+model TodoItem {
+  id          String   @id @default(cuid())
+  title       String
+  completed   Boolean  @default(false)
+  assigneeId  String
+  sortOrder   Int      @default(0)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assignee    User     @relation("TodoAssignee", fields: [assigneeId], references: [id])
+  createdBy   User     @relation("TodoCreator", fields: [createdById], references: [id])
+}
+
+model ResearchFolder {
+  id        String           @id @default(cuid())
+  name      String
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  files     ResearchFile[]
+}
+
+model ResearchFile {
+  id         String           @id @default(cuid())
+  name       String
+  blobUrl    String
+  blobPath   String
+  mimeType   String
+  size       Int
+  folderId   String?
+  uploaderId String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  folder     ResearchFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploader   User             @relation(fields: [uploaderId], references: [id])
+  comments   Comment[]
 }

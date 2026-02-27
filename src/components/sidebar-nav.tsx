@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { BookOpen, Eye, LayoutDashboard, LogOut, Menu, Search, Library } from "lucide-react";
+import { BookOpen, Eye, LayoutDashboard, ListTodo, LogOut, Menu, Search, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,7 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Översikt", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Att göra", icon: ListTodo },
+  { href: "/overview", label: "Uppsatsöversikt", icon: LayoutDashboard },
   { href: "/research", label: "Forskning", icon: Library },
   { href: "/search", label: "Sök artiklar", icon: Search },
   { href: "/preview", label: "Förhandsgranska", icon: Eye },

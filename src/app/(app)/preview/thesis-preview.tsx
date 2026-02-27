@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, FileDown, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface ResearchRef {
   id: string;
@@ -272,7 +273,7 @@ export function ThesisPreview({ sections }: ThesisPreviewProps) {
                 {i > 0 && <hr className="section-divider" />}
                 <h2>{section.sortOrder}. {section.title}</h2>
                 {processedHtml ? (
-                  <div dangerouslySetInnerHTML={{ __html: processedHtml }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedHtml) }} />
                 ) : (
                   <p className="italic text-gray-400">Inget innehåll ännu.</p>
                 )}
@@ -302,7 +303,7 @@ export function ThesisPreview({ sections }: ThesisPreviewProps) {
                 <li key={ref.id}>
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: formatHarvardReference(ref),
+                      __html: sanitizeHtml(formatHarvardReference(ref)),
                     }}
                   />
                   {ref.doi && (

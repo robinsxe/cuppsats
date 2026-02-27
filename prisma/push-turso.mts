@@ -94,6 +94,48 @@ const statements = [
 
   // Migration: add parentId to existing Comment table
   `ALTER TABLE "Comment" ADD COLUMN "parentId" TEXT REFERENCES "Comment"("id") ON DELETE SET NULL ON UPDATE CASCADE`,
+
+  // TodoItem
+  `CREATE TABLE IF NOT EXISTS "TodoItem" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "completed" INTEGER NOT NULL DEFAULT 0,
+    "assigneeId" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdById" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "TodoItem_assigneeId_fkey" FOREIGN KEY ("assigneeId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "TodoItem_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+  )`,
+
+  // ResearchFolder
+  `CREATE TABLE IF NOT EXISTS "ResearchFolder" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+  )`,
+
+  // ResearchFile
+  `CREATE TABLE IF NOT EXISTS "ResearchFile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "blobUrl" TEXT NOT NULL,
+    "blobPath" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "folderId" TEXT,
+    "uploaderId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "ResearchFile_folderId_fkey" FOREIGN KEY ("folderId") REFERENCES "ResearchFolder" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "ResearchFile_uploaderId_fkey" FOREIGN KEY ("uploaderId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+  )`,
+
+  // Migration: add researchFileId to existing Comment table
+  `ALTER TABLE "Comment" ADD COLUMN "researchFileId" TEXT REFERENCES "ResearchFile"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
 ];
 
 async function main() {

@@ -29,7 +29,7 @@ export async function PATCH(
 
   const updated = await prisma.comment.update({
     where: { id },
-    data: { content: body.content.trim() },
+    data: { content: body.content.trim().slice(0, 5000) },
     include: {
       author: { select: { id: true, name: true, role: true } },
     },

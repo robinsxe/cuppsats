@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface CommentFormProps {
   sectionId?: string;
   researchItemId?: string;
+  researchFileId?: string;
   parentId?: string;
   quotedText?: string;
   onCancel?: () => void;
@@ -17,6 +18,7 @@ interface CommentFormProps {
 export function CommentForm({
   sectionId,
   researchItemId,
+  researchFileId,
   parentId,
   quotedText,
   onCancel,
@@ -43,6 +45,7 @@ export function CommentForm({
       content: content.trim(),
       sectionId: sectionId ?? null,
       researchItemId: researchItemId ?? null,
+      researchFileId: researchFileId ?? null,
     };
 
     if (parentId) {

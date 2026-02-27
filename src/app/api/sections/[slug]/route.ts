@@ -20,6 +20,12 @@ export async function PATCH(
   const updateData: { content?: string; status?: string; title?: string } = {};
 
   if (typeof body.content === "string") {
+    if (body.content.length > 100_000) {
+      return NextResponse.json(
+        { error: "Innehållet är för långt (max 100 000 tecken)" },
+        { status: 400 }
+      );
+    }
     updateData.content = body.content;
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sanitizeHtml } from "@/lib/sanitize";
 import htmlToDocx from "html-to-docx";
 
 export async function POST(request: NextRequest) {
@@ -16,7 +17,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "HTML content is required" }, { status: 400 });
   }
 
-  const fullHtml = `<!DOCTYPE html><html><body>${html}</body></html>`;
+  const cleanHtml = sanitizeHtml(html);
+  const fullHtml = `<!DOCTYPE html><html><body>${cleanHtml}</body></html>`;
   const buffer = await htmlToDocx(fullHtml, undefined, {
     table: { row: { cantSplit: true } },
     footer: true,

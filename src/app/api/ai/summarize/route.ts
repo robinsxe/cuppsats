@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { summarizeAbstract } from "@/lib/ai/summarizer";
 import { prisma } from "@/lib/prisma";
 
@@ -8,6 +9,14 @@ export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = rateLimit(`summarize:${session.user.id}`, 10);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "För många förfrågningar. Försök igen om en stund." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    );
   }
 
   const body = await request.json();

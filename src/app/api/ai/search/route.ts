@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { searchSemanticScholar } from "@/lib/ai/semantic-scholar";
 import { searchOpenAlex } from "@/lib/ai/openalex";
 import { type SearchResult } from "@/lib/ai/types";
@@ -9,6 +10,14 @@ export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = rateLimit(`search:${session.user.id}`, 20);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "För många förfrågningar. Försök igen om en stund." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    );
   }
 
   const query = request.nextUrl.searchParams.get("q");

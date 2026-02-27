@@ -15,19 +15,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
   }
 
-  if (!body.sectionId && !body.researchItemId) {
+  if (!body.sectionId && !body.researchItemId && !body.researchFileId) {
     return NextResponse.json(
-      { error: "Either sectionId or researchItemId is required" },
+      { error: "Either sectionId, researchItemId, or researchFileId is required" },
       { status: 400 }
     );
   }
 
   const comment = await prisma.comment.create({
     data: {
-      content: body.content.trim(),
+      content: body.content.trim().slice(0, 5000),
       authorId: session.user.id,
       sectionId: body.sectionId ?? null,
       researchItemId: body.researchItemId ?? null,
+      researchFileId: body.researchFileId ?? null,
       parentId: body.parentId ?? null,
     },
     include: {
