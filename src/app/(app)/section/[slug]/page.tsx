@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -45,12 +46,14 @@ export default async function SectionPage({ params }: SectionPageProps) {
   }
 
   return (
-    <SectionEditor
-      section={{
-        ...section,
-        status: section.status as SectionStatus,
-      }}
-      currentUserId={session.user.id}
-    />
+    <Suspense>
+      <SectionEditor
+        section={{
+          ...section,
+          status: section.status as SectionStatus,
+        }}
+        currentUserId={session.user.id}
+      />
+    </Suspense>
   );
 }

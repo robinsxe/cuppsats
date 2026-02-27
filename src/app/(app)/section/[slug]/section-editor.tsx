@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Cloud, Loader2, Check, BookOpen, Pencil } from "lucide-react";
+import { ArrowLeft, Cloud, Loader2, Check, BookOpen, Pencil, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichEditor, type CitationSource } from "@/components/rich-editor";
@@ -24,6 +24,7 @@ import {
 } from "@/lib/constants";
 import { CommentList } from "@/components/comment-list";
 import { CommentForm } from "@/components/comment-form";
+import { SessionTimer } from "@/components/session-timer";
 
 export interface CommentData {
   id: string;
@@ -63,15 +64,20 @@ type SaveStatus = "idle" | "unsaved" | "saving" | "saved";
 
 export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [content, setContent] = useState(section.content);
   const [title, setTitle] = useState(section.title);
   const [editingTitle, setEditingTitle] = useState(false);
   const [status, setStatus] = useState<SectionStatus>(section.status);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [wordCount, setWordCount] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
   const sessionStartWordCount = useRef<number | null>(null);
   const isInitialRender = useRef(true);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const timerParam = searchParams.get("timer");
+  const initialTimerMinutes = timerParam ? parseInt(timerParam, 10) : undefined;
 
   const handleWordCountChange = useCallback((count: number) => {
     setWordCount(count);
@@ -147,6 +153,49 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasChanges, handleSave]);
 
+  // Ctrl+Shift+F for focus mode + Escape to exit
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        setFocusMode((prev) => !prev);
+      }
+      if (e.key === "Escape" && focusMode) {
+        setFocusMode(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusMode]);
+
+  // Track session on page unload
+  useEffect(() => {
+    function handleUnload() {
+      const delta = sessionStartWordCount.current !== null
+        ? wordCount - sessionStartWordCount.current
+        : 0;
+      if (delta > 0) {
+        navigator.sendBeacon(
+          "/api/sessions",
+          JSON.stringify({ wordCount: delta, minutes: 0 })
+        );
+      }
+    }
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [wordCount]);
+
+  const handleSessionEnd = useCallback((minutes: number) => {
+    const delta = sessionStartWordCount.current !== null
+      ? wordCount - sessionStartWordCount.current
+      : 0;
+    fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wordCount: Math.max(0, delta), minutes }),
+    });
+  }, [wordCount]);
+
   // Citation sources from linked research
   const citations: CitationSource[] = section.researchLinks.map((link) => ({
     id: link.researchItem.id,
@@ -157,6 +206,57 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
 
   // Reply state
   const [replyTo, setReplyTo] = useState<{ parentId: string; quotedText: string } | null>(null);
+
+  // Focus mode overlay
+  if (focusMode) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center">
+        <div className="w-full max-w-3xl flex-1 flex flex-col p-6 sm:p-12">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-lg font-semibold text-muted-foreground">
+              {section.sortOrder}. {title}
+            </h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFocusMode(false)}
+              className="gap-2 text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              Avsluta fokusläge
+            </Button>
+          </div>
+          <div className="flex-1">
+            <RichEditor
+              value={content}
+              onValueChange={setContent}
+              onWordCountChange={handleWordCountChange}
+              citations={citations}
+              placeholder="Börja skriva här..."
+              minHeight={600}
+            />
+          </div>
+          <div className="mt-4 space-y-3">
+            {wordCount > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {wordCount} ord
+                {sessionDelta !== 0 && (
+                  <span className={sessionDelta > 0 ? "text-green-600" : "text-red-500"}>
+                    {" · "}{sessionDelta > 0 ? "+" : ""}{sessionDelta} denna session
+                  </span>
+                )}
+              </p>
+            )}
+            <SessionTimer
+              initialMinutes={initialTimerMinutes}
+              sessionWordDelta={sessionDelta}
+              onSessionEnd={handleSessionEnd}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -192,6 +292,16 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
             </h1>
           )}
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setFocusMode(true)}
+          className="gap-2 text-muted-foreground"
+          title="Fokusläge (Ctrl+Shift+F)"
+        >
+          <Maximize2 className="h-4 w-4" />
+          <span className="hidden sm:inline">Fokusläge</span>
+        </Button>
         <Badge variant="outline" className={STATUS_BADGE_VARIANTS[status]}>
           {STATUS_LABELS[status]}
         </Badge>
@@ -258,6 +368,12 @@ export function SectionEditor({ section, currentUserId }: SectionEditorProps) {
           )}
         </p>
       )}
+
+      <SessionTimer
+        initialMinutes={initialTimerMinutes}
+        sessionWordDelta={sessionDelta}
+        onSessionEnd={handleSessionEnd}
+      />
 
       {/* Linked Research */}
       {section.researchLinks.length > 0 && (

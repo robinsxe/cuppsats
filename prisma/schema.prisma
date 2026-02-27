@@ -17,6 +17,19 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   comments       Comment[]
+  sessions       WritingSession[]
+}
+
+model WritingSession {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // YYYY-MM-DD
+  wordCount Int      @default(0)
+  minutes   Int      @default(0)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
 }
 
 model Section {

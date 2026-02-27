@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, FileDown, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResearchRef {
@@ -68,6 +68,50 @@ function formatHarvardReference(ref: ResearchRef): string {
 
 export function ThesisPreview({ sections }: ThesisPreviewProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [docxLoading, setDocxLoading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!contentRef.current) return;
+    setPdfLoading(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      await html2pdf()
+        .set({
+          margin: [15, 15, 15, 15],
+          filename: "uppsats.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(contentRef.current)
+        .save();
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!contentRef.current) return;
+    setDocxLoading(true);
+    try {
+      const response = await fetch("/api/export-docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: contentRef.current.innerHTML }),
+      });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "uppsats.docx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDocxLoading(false);
+    }
+  };
 
   // Collect all unique references across all sections
   const refsMap = new Map<string, ResearchRef>();
@@ -94,15 +138,37 @@ export function ThesisPreview({ sections }: ThesisPreviewProps) {
           </Button>
         </Link>
         <h1 className="text-xl font-bold flex-1 ml-3">Förhandsgranska uppsats</h1>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.print()}
-          className="gap-2"
-        >
-          <Printer className="h-4 w-4" />
-          Skriv ut
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            Skriv ut
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+            className="gap-2"
+          >
+            {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            Ladda ner PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadDocx}
+            disabled={docxLoading}
+            className="gap-2"
+          >
+            {docxLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+            Ladda ner DOCX
+          </Button>
+        </div>
       </div>
 
       <div
